@@ -142,6 +142,25 @@ ul[class], ol[class] { list-style: none; padding: 0; }
 }
 
 /* --------------------------------------------------------------------------
+   2b. Feature flags
+   The switch is `FEATURES` at the top of assets/js/main.js. main.js writes the
+   result onto the <html> element as data-<flag>="on" | "off" as its very first
+   action, then removes the elements of any flag that is off.
+
+   Markup contract:
+     data-feature="<flag>"       hidden unless that flag is on
+     data-feature="<flag>-off"   the copy shown in its place when it is off
+
+   Hidden is the DEFAULT. With no attribute present at all — JavaScript
+   blocked, or the script failing to load — the feature stays off and there is
+   no flash of content that then vanishes. The trade-off runs the other way:
+   when a flag is switched back on, its elements appear as the deferred script
+   runs. CLAUDE.md has the one-line <head> snippet that removes even that.
+   -------------------------------------------------------------------------- */
+html:not([data-whatsapp="on"]) [data-feature="whatsapp"]     { display: none !important; }
+html[data-whatsapp="on"]       [data-feature="whatsapp-off"] { display: none !important; }
+
+/* --------------------------------------------------------------------------
    3. Primitives
    -------------------------------------------------------------------------- */
 .container {
@@ -441,9 +460,10 @@ ul[class], ol[class] { list-style: none; padding: 0; }
     border-bottom: 1px solid var(--line);
   }
   .nav__link[aria-current="true"]::after { inset-inline: .25rem auto; inline-size: 18px; bottom: .55rem; }
-  .nav > .contact-chip { display: flex; justify-content: center; padding: .7rem 1rem; }
-  .nav > .contact-chip--wa   { margin-top: 1rem; }
-  .nav > .contact-chip--mail { margin-top: .5rem; }
+  .nav > .contact-chip { display: flex; justify-content: center; padding: .7rem 1rem; margin-top: .5rem; }
+  /* Order-independent, so the spacing below the nav links is right whichever
+     contact chips a feature flag happens to leave in place. */
+  .nav > .contact-chip:first-of-type { margin-top: 1rem; }
 }
 
 @media (max-width: 560px) {

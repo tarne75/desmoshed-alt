@@ -21,6 +21,49 @@
 'use strict';
 
 /* --------------------------------------------------------------------------
+   0. FEATURE FLAGS  ←  the switchboard
+   -------------------------------------------------------------------------- */
+/**
+ * Turn a whole contact channel or capability on and off site-wide from one
+ * line. Set a flag to false and every link, chip, row and mention of it
+ * disappears — header, mobile menu, body copy, footer, the lot. Set it back to
+ * true and it all returns. No markup needs hunting down either way.
+ *
+ * Flag names must be lowercase with no separators, because each one is written
+ * to <html> as data-<name> and read back by a CSS attribute selector.
+ *
+ *   whatsapp  Disabled 23 Sep 2026 at the owner's request.
+ *             When on, it covers seven places: the header chip, the mobile
+ *             menu chip, the fees note sentence, the contact card row, the
+ *             enquiry form's small print, the footer link list and the footer
+ *             social icon — plus the wording of the form's error fallback.
+ *             To re-enable: change false to true here. That is the only edit.
+ */
+const FEATURES = {
+  whatsapp: false
+};
+
+/**
+ * Applied here at load rather than inside boot(), so the page reaches its
+ * correct state as early as a deferred script is allowed to run.
+ *
+ * Two things happen. The flag state goes onto <html> for the CSS in
+ * styles.css §2b to act on — that is what prevents a flash of content the
+ * moment the page paints. Then anything belonging to a disabled flag is
+ * removed from the document outright, so no switched-off link is left behind
+ * for a crawler to follow or a screen reader to announce. The markup stays in
+ * index.html untouched, which is why re-enabling is only the flag.
+ */
+(() => {
+  const root = document.documentElement;
+  for (const [flag, on] of Object.entries(FEATURES)) {
+    root.dataset[flag] = on ? 'on' : 'off';
+    if (on) continue;
+    root.querySelectorAll(`[data-feature="${flag}"]`).forEach(el => el.remove());
+  }
+})();
+
+/* --------------------------------------------------------------------------
    1. DATA SOURCES
    -------------------------------------------------------------------------- */
 const SOURCES = {
@@ -167,11 +210,14 @@ const GALLERY_DIR  = 'assets/img/gallery/';
 const PLACEHOLDER  = 'assets/img/placeholder.svg';
 const FORM_ENDPOINT = 'https://formspree.io/f/xwvndkow';
 
-/* Contact fallbacks, used when the form cannot reach Formspree.
+/* Contact fallbacks, used when the form cannot reach Formspree. Tracks the
+   whatsapp feature flag so the message never offers a channel that is off.
    The canonical copies of these live in index.html — if the number or address
    ever changes, grep for "447590608704" and "desmoshed@outlook.com" and change
    every hit, including the WhatsApp links and the JSON-LD block. */
-const FALLBACK_CONTACT = 'call +44 7590 608 704, message us on WhatsApp, or email desmoshed@outlook.com';
+const FALLBACK_CONTACT = FEATURES.whatsapp
+  ? 'call +44 7590 608 704, message us on WhatsApp, or email desmoshed@outlook.com'
+  : 'call +44 7590 608 704 or email desmoshed@outlook.com';
 
 /* --------------------------------------------------------------------------
    2. Tiny helpers
